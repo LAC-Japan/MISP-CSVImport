@@ -6,6 +6,10 @@ MISP project: <http://www.misp-project.org/>
 
 CSVやTSV等のファイルに記載された情報を元に、MISPのイベントを登録します。  
 
+## ライセンス
+
+このソフトウェアは、ＢＳＤライセンスのもとで公開されています。LICENSE.txtを参照ください。
+
 ## 動作環境
 
 * python3.5.2以上  

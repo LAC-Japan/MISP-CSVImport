@@ -1,3 +1,9 @@
+# Copyright (c) 2018 LAC Co.,Ltd.
+# All rights reserved.
+#
+# This software is released under the BSD License.
+# https://opensource.org/licenses/BSD-2-Clause
+
 # define constants
 
 # API key dictionary.

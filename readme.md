@@ -6,6 +6,10 @@ MISP project: <http://www.misp-project.org/>
 
 Register MISP events based on information described in files such as CSV and TSV.  
 
+## license
+
+This software is released under the BSD License, see LICENSE.txt.
+
 ## Environment
 
 * Python 3.5.2 and above  
