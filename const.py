@@ -6,33 +6,45 @@
 
 # define constants
 
-# API key dictionary.
-# key: user account(mail address)
-# value: apikey
-MISP_APIKEYS = {
-	'sample@user.email': 'authkey'
-}
-
 # MISP URL
 MISP_URL = 'https://example.misp'
 
-# distribution
-# your_organization = 0
-# this_community = 1
-# connected_communities = 2
-# all_communities = 3
-# sharing_group = 4
-DISTRIBUTION = '0'
+# import configuration dictionary.
+#
+# key: user account(mail address)
+# value: dictionary containing the following keys.
+#
+# 	authkey: valid authkey for user account.
+#
+# 	distribution: One of the following constants.
+DISTRIBUTION_YOUR_ORGANIZATION = '0'
+DISTRIBUTION_THIS_COMMUNITY = '1'
+DISTRIBUTION_CONNECTED_COMMUNITIES = '2'
+DISTRIBUTION_ALL_COMMUNITIES = '3'
+DISTRIBUTION_SHARING_GROUP = '4'
 
-# threat level
-# high = 1
-# medium = 2
-# low = 3
-# undefined = 4
-THREAT_LEVEL = '2'
+# 	threat_level: One of the following constants
+THREAT_LEVEL_HIGH = '1'
+THREAT_LEVEL_MIDIUM = '2'
+THREAT_LEVEL_LOW = '3'
+THREAT_LEVEL_UNDEFINED = '4'
 
-# analysis level
-# initial = 0 
-# ongoing = 1
-# completed = 2
-ANALYSIS_LEVEL = '0'
+# 	analysis_level:  One of the following constants
+ANALYSIS_LEVEL_INITIAL = '0'
+ANALYSIS_LEVEL_ONGOING = '1'
+ANALYSIS_LEVEL_COMPLETED = '2'
+
+IMPORT_CONFIG = {
+	'sample1@user.email': {
+		'authkey': 'sample1 user authkey'
+		,'distribution': DISTRIBUTION_YOUR_ORGANIZATION
+		,'threat_level': THREAT_LEVEL_MIDIUM
+		,'analysis_level': ANALYSIS_LEVEL_COMPLETED
+	}
+	, 'sample2@user.email': {
+		'authkey': 'sample2 user authkey'
+		,'distribution': DISTRIBUTION_THIS_COMMUNITY
+		,'threat_level': THREAT_LEVEL_MIDIUM
+		,'analysis_level': ANALYSIS_LEVEL_COMPLETED
+	}
+}

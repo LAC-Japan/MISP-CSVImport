@@ -42,8 +42,8 @@ class MISPController(object):
 
 	def _connect(self):
 		self.debug_print('URL: {}'.format(self.misp_param['url']))
-		self.debug_print('apikey: {}'.format(self.misp_param['apikey']))
-		self.misp = PyMISP(self.misp_param['url'], self.misp_param['apikey'], False, 'json')
+		self.debug_print('authkey: {}'.format(self.misp_param['authkey']))
+		self.misp = PyMISP(self.misp_param['url'], self.misp_param['authkey'], False, 'json')
 		self._registered_tags = self.misp.get_all_tags()
 
 	def _check_tag(self, target_tag):
@@ -131,7 +131,7 @@ class MISPController(object):
 				, value = attribute['value']
 				, category = attribute['category']
 				, comment = attribute.get('comment', '')
-				, distribution = self.misp_param['distribution']
+				, distribution = '5'
 				, Tag = self._create_tags(attribute['tags'])
 			)
 

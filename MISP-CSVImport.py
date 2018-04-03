@@ -1,3 +1,9 @@
+# Copyright (c) 2018 LAC Co.,Ltd.
+# All rights reserved.
+#
+# This software is released under the BSD License.
+# https://opensource.org/licenses/BSD-2-Clause
+
 # Import MISP Event from file script
 # Copyright (c) 2018 LAC Co.,Ltd.
 # All rights reserved.
@@ -37,13 +43,13 @@ if __name__ == '__main__':
 
 	print('Import MISP start')
 	controllers = {}
-	for user, apikey in const.MISP_APIKEYS.items():
+	for user, import_config in const.IMPORT_CONFIG.items():
 		controllers[user] = MISPController({
 			'url': const.MISP_URL
-			, 'apikey': apikey
-			, 'distribution': const.DISTRIBUTION
-			, 'threat_level_id': const.THREAT_LEVEL
-			, 'analysis': const.ANALYSIS_LEVEL
+			, 'authkey': import_config['authkey']
+			, 'distribution': import_config['distribution']
+			, 'threat_level_id': import_config['threat_level']
+			, 'analysis': import_config['analysis_level']
 			, 'max_retry_count': 5
 		})
 

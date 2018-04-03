@@ -1,4 +1,4 @@
-﻿# MISP CSVImport
+﻿# MISP CSVImport Ver 1.01
 
 MISP project: <http://www.misp-project.org/>
 
@@ -64,25 +64,26 @@ sample.tsv
 
 const.pyを開き、以下の設定を行います。  
 
-##### ２－１　authkeyの設定
+##### ２－１　MISP接続先
 
-以下の変数に、キーにユーザのメールアドレス、値にauthkeyの形式でdictionary形式で定義します。  
-ここで定義したユーザメールアドレスとインポート対照ファイルのユーザカラムの値が紐付けられ、該当イベントのインポート時にそのユーザのauthkeyが利用されます。  
-対象変数：　MISP_APIKEYS  
+* MISP_URL: MISPが動作しているサーバのＵＲＬ  
+
+##### ２－２　インポート設定
+
+以下の変数に、キーにユーザのメールアドレス、値に当該ユーザでのインポート設定を下記の形式で設定します。
+ここで定義したユーザメールアドレスとインポート対照ファイルのユーザカラムの値が紐付けられ、該当イベントのインポート時にそのユーザのインポート設定が利用されます。  
+対象変数：　IMPORT_CONFIG
 
 ##### 例
 
-    MISP_APIKEYS = {
-    	'sample@misp.user': 'authkey'
-    	,'sample2@misp.user': 'authkey2'
+    IMPORT_CONFIG = {
+    	'sample@misp.user': {
+    		'authkey': 'valid authkey'
+    		,'distribution': 'distribution config constants'
+    		,'threat_level': 'threat level config constants'
+    		,'analysis_level': 'analysis level config constants'
+    	}
     }
-
-##### ２－２　その他のMISP関連定義
-
-* MISP_URL: MISPが動作しているサーバのＵＲＬ  
-* DISTRIBUTION：　インポートイベントのDISTRIBUTION  
-* THREAT_LEVEL：　インポートイベントのTHREAT_LEVEL  
-* ANALYSIS_LEVEL：　インポートイベントのANALYSIS_LEVEL  
 
 #### ３　スクリプトの実行
 
