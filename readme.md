@@ -108,5 +108,5 @@ Import sample.tsv
 * For tags described as tags of events or attributes, add them as tags if they are not registered in MISP, then set them as tags of the corresponding event or attribute. Therefore, the user who performs the import needs "add tag" authority.  
 * If there is a line whose attribute / category / type / value all match in the same event title in the data to be imported, a warning is displayed and the corresponding line is ignored  
 * Registration errors due to input data such as inconsistency of attribute category / type may be output, so please check all the output results of the script  
-* When multibyte characters are included in the import file, please make the character code with UTF-8  
+* When multibyte characters are included in the import file, please make the character code with UTF-8(no BOM)  
 * If you want to include line breaks in each field of the file, enclose the corresponding field with ""  
