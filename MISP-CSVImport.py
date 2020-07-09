@@ -4,13 +4,6 @@
 # This software is released under the BSD License.
 # https://opensource.org/licenses/BSD-2-Clause
 
-# Import MISP Event from file script
-# Copyright (c) 2018 LAC Co.,Ltd.
-# All rights reserved.
-#
-# This software is released under the BSD License.
-# https://opensource.org/licenses/BSD-2-Clause
-
 import argparse
 import pathlib
 import traceback

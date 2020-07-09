@@ -5,7 +5,7 @@
 # https://opensource.org/licenses/BSD-2-Clause
 
 import time, datetime, traceback
-from pymisp import PyMISP, MISPEvent, MISPAttribute
+from pymisp import ExpandedPyMISP, MISPEvent, MISPAttribute, MISPTag
 
 import urllib3
 from urllib3.exceptions import InsecureRequestWarning
@@ -43,15 +43,18 @@ class MISPController(object):
 	def _connect(self):
 		self.debug_print('URL: {}'.format(self.misp_param['url']))
 		self.debug_print('authkey: {}'.format(self.misp_param['authkey']))
-		self.misp = PyMISP(self.misp_param['url'], self.misp_param['authkey'], False, 'json')
-		self._registered_tags = self.misp.get_all_tags()
+		self.misp = ExpandedPyMISP(self.misp_param['url'], self.misp_param['authkey'], ssl=False, debug=False)
+		self._registered_tags = self.misp.tags()
 
 	def _check_tag(self, target_tag):
 
 		if self.misp == None:
 			self._connect()
 
-		for tag_info in self._registered_tags.get('Tag', {}):
+		if self._registered_tags == None:
+			self._get_tags()
+
+		for tag_info in self._registered_tags:
 			if tag_info.get('name', '') == target_tag:
 				return True
 
@@ -63,8 +66,10 @@ class MISPController(object):
 				if self.misp == None:
 					self._connect()
 
-				self.misp.new_tag(target_tag, exportable = True)
-				self._registered_tags = self.misp.get_all_tags()
+				tmp = MISPTag()
+				tmp.from_dict(name=target_tag)
+				self.misp.add_tag(tmp)
+				self._get_tags()
 				return True
 
 			except:
@@ -93,14 +98,16 @@ class MISPController(object):
 				if self.misp == None:
 					self._connect()
 
-				response = self.misp.new_event(
-					self.misp_param['distribution']
-					,self.misp_param['threat_level_id']
-					,self.misp_param['analysis']
-					, value['title']
+				tmp = MISPEvent()
+				tmp.from_dict(
+					distribution = self.misp_param['distribution']
+					, threat_level_id = self.misp_param['threat_level_id']
+					, analysis = self.misp_param['analysis']
+					, info = value['title']
 					, date = value['date']
-					, published=True
+					, published = False
 				)
+				response = self.misp.add_event(tmp)
 				if response.get('errors'):
 					raise Exception(str(response['errors']))
 
@@ -131,9 +138,11 @@ class MISPController(object):
 				, value = attribute['value']
 				, category = attribute['category']
 				, comment = attribute.get('comment', '')
-				, distribution = '5'
+				, distribution = self.misp_param['distribution']
 				, Tag = self._create_tags(attribute['tags'])
 			)
+
+		event.published = True
 
 		if self._update_event(event):
 			self.debug_print('completed')
@@ -205,13 +214,10 @@ class MISPController(object):
 
 				self.debug_print('search event start')
 				response = self.misp.search_index(**cons)
-				if response.get('errors'):
-					raise Exception(str(response['errors']))
-
-				results = []
 				self.debug_print('search event end')
 
-				for json in response.get('response', []):
+				results = []
+				for json in response:
 
 					if json.get('id', ''):
 						results.append(self._get_event(json['id']))
@@ -240,7 +246,7 @@ class MISPController(object):
 					self._connect()
 
 				self.debug_print('event update start: {}'.format(event.id))
-				response = self.misp.update(event)
+				response = self.misp.update_event(event)
 				if response.get('errors'):
 					raise Exception(str(response['errors']))
 
