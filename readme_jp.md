@@ -1,4 +1,4 @@
-﻿# MISP CSVImport Ver 1.01
+﻿# MISP CSVImport
 
 MISP project: <http://www.misp-project.org/>
 
