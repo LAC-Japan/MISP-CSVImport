@@ -35,16 +35,9 @@ ANALYSIS_LEVEL_ONGOING = '1'
 ANALYSIS_LEVEL_COMPLETED = '2'
 
 IMPORT_CONFIG = {
-	'sample1@user.email': {
-		'authkey': 'sample1 user authkey'
-		,'distribution': DISTRIBUTION_YOUR_ORGANIZATION
-		,'threat_level': THREAT_LEVEL_MIDIUM
-		,'analysis_level': ANALYSIS_LEVEL_COMPLETED
-	}
-	, 'sample2@user.email': {
-		'authkey': 'sample2 user authkey'
-		,'distribution': DISTRIBUTION_THIS_COMMUNITY
-		,'threat_level': THREAT_LEVEL_MIDIUM
-		,'analysis_level': ANALYSIS_LEVEL_COMPLETED
-	}
+    'sample1@user.email': {
+        'authkey': 'sample1 user authkey', 'distribution': DISTRIBUTION_YOUR_ORGANIZATION, 'threat_level': THREAT_LEVEL_MIDIUM, 'analysis_level': ANALYSIS_LEVEL_COMPLETED
+    }, 'sample2@user.email': {
+        'authkey': 'sample2 user authkey', 'distribution': DISTRIBUTION_THIS_COMMUNITY, 'threat_level': THREAT_LEVEL_MIDIUM, 'analysis_level': ANALYSIS_LEVEL_COMPLETED
+    }
 }
