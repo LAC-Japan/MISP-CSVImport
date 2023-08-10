@@ -4,283 +4,282 @@
 # This software is released under the BSD License.
 # https://opensource.org/licenses/BSD-2-Clause
 
-import time, datetime, traceback
+import time
+import datetime
+import traceback
 from pymisp import ExpandedPyMISP, MISPEvent, MISPAttribute, MISPTag
 
 import urllib3
 from urllib3.exceptions import InsecureRequestWarning
 urllib3.disable_warnings(InsecureRequestWarning)
 
+
 class MISPController(object):
-	''' MISP Controller '''
+    ''' MISP Controller '''
 
-	def __init__(self, misp_param, debug = False):
-		self.misp_param = misp_param
-		self.debug = debug
+    def __init__(self, misp_param, debug=False):
+        self.misp_param = misp_param
+        self.debug = debug
 
-		if misp_param.get('connect_immediately', False):
-			self._connect()
-		else:
-			self.misp = None
+        if misp_param.get('connect_immediately', False):
+            self._connect()
+        else:
+            self.misp = None
 
-	def import_event(self, event_data):
-		''' Import event '''
+    def import_event(self, event_data):
+        ''' Import event '''
 
-		# Check registered same event info
-		print('importing: {}'.format(event_data['title']))
-		events = self._search_event(eventinfo = event_data['title'])
-		if events != None:
-			for event in events:
-				if event_data['title'] == event['Event']['info']:
-					self._remove_event(event['Event']['id'])
+        # Check registered same event info
+        print('importing: {}'.format(event_data['title']))
+        events = self._search_event(eventinfo=event_data['title'])
+        if events != None:
+            for event in events:
+                if event_data['title'] == event['Event']['info']:
+                    self._remove_event(event['Event']['id'])
 
-		event = self._add_event(event_data)
-		if event:
-			print('created event: {}'.format(event.id))
-		else:
-			print("Import failed.Please retry: {}".format(event_data['title']))
+        event = self._add_event(event_data)
+        if event:
+            print('created event: {}'.format(event.id))
+        else:
+            print("Import failed.Please retry: {}".format(event_data['title']))
 
-	def _connect(self):
-		self.debug_print('URL: {}'.format(self.misp_param['url']))
-		self.debug_print('authkey: {}'.format(self.misp_param['authkey']))
-		self.misp = ExpandedPyMISP(self.misp_param['url'], self.misp_param['authkey'], ssl=False, debug=False)
-		self._registered_tags = self.misp.tags()
+    def _connect(self):
+        self.debug_print('URL: {}'.format(self.misp_param['url']))
+        self.debug_print('authkey: {}'.format(self.misp_param['authkey']))
+        self.misp = ExpandedPyMISP(
+            self.misp_param['url'], self.misp_param['authkey'], ssl=False, debug=False)
+        self._registered_tags = []
 
-	def _check_tag(self, target_tag):
+    def _check_tag(self, target_tag):
 
-		if self.misp == None:
-			self._connect()
+        if self.misp == None:
+            self._connect()
 
-		if self._registered_tags == None:
-			self._get_tags()
+        if (target_tag is None
+                or len(target_tag) == 0):
+            return True
+        elif target_tag in [t.get('name', '') for t in self._registered_tags]:
+            return True
 
-		for tag_info in self._registered_tags:
-			if tag_info.get('name', '') == target_tag:
-				return True
+        self.debug_print('new tag: {}'.format(target_tag))
 
-		self.debug_print('new tag: {}'.format(target_tag))
+        cnt = 0
+        while True:
+            try:
+                if self.misp == None:
+                    self._connect()
 
-		cnt = 0
-		while True:
-			try:
-				if self.misp == None:
-					self._connect()
+                tmp = MISPTag()
+                tmp.from_dict(name=target_tag)
+                response = self.misp.add_tag(tmp)
+                if response.get('errors', None) is not None:
+                    raise Exception(str(response['errors']))
 
-				tmp = MISPTag()
-				tmp.from_dict(name=target_tag)
-				self.misp.add_tag(tmp)
-				self._get_tags()
-				return True
+                register_tag = response['Tag']
+                self._registered_tags.append(register_tag)
 
-			except:
-				print(traceback.format_exc())
+                return True
 
-				if cnt < int(self.misp_param.get('max_retry_count', '0')):
-					print('add new tag retry: {}'.format(cnt))
-					cnt = cnt + 1
-					time.sleep(10)
-				else:
-					return False
+            except:
+                print(traceback.format_exc())
 
-	def _add_event(self, value):
+                if cnt < int(self.misp_param.get('max_retry_count', '0')):
+                    print('add new tag retry: {}'.format(cnt))
+                    cnt = cnt + 1
+                    time.sleep(10)
+                else:
+                    return False
 
-		for tag in value['event_tags']:
-			self._check_tag(tag)
+    def _add_event(self, value):
 
-		for attribute in value['attributes']:
-			for tag in attribute['tags']:
-				self._check_tag(tag)
+        for tag in value['event_tags']:
+            self._check_tag(tag)
 
-		cnt = 0
-		while True:
-			try:
+        for attribute in value['attributes']:
+            for tag in attribute['tags']:
+                self._check_tag(tag)
 
-				if self.misp == None:
-					self._connect()
+        cnt = 0
+        while True:
+            try:
 
-				tmp = MISPEvent()
-				tmp.from_dict(
-					distribution = self.misp_param['distribution']
-					, threat_level_id = self.misp_param['threat_level_id']
-					, analysis = self.misp_param['analysis']
-					, info = value['title']
-					, date = value['date']
-					, published = False
-				)
-				response = self.misp.add_event(tmp)
-				if response.get('errors'):
-					raise Exception(str(response['errors']))
+                if self.misp == None:
+                    self._connect()
 
-				event = MISPEvent()
-				event.load(response)
-				break
+                tmp = MISPEvent()
+                tmp.from_dict(
+                    distribution=self.misp_param['distribution'], threat_level_id=self.misp_param[
+                        'threat_level_id'], analysis=self.misp_param['analysis'], info=value['title'], date=value['date'], published=False
+                )
+                response = self.misp.add_event(tmp)
+                if response.get('errors'):
+                    raise Exception(str(response['errors']))
 
-			except:
-				print(traceback.format_exc())
+                event = MISPEvent()
+                event.load(response)
+                break
 
-				if cnt < int(self.misp_param.get('max_retry_count', '0')):
-					print('add new event retry: {}'.format(cnt))
-					cnt = cnt + 1
-					time.sleep(10)
-				else:
-					return None
+            except:
+                print(traceback.format_exc())
 
-		self.debug_print(event.id)
+                if cnt < int(self.misp_param.get('max_retry_count', '0')):
+                    print('add new event retry: {}'.format(cnt))
+                    cnt = cnt + 1
+                    time.sleep(10)
+                else:
+                    return None
 
-		for tag in value['event_tags']:
-				event.add_tag(tag)
+        self.debug_print(event.id)
 
-		for attribute in value['attributes']:
-			attribute_tags = []
+        for tag in value['event_tags']:
+            event.add_tag(tag)
 
-			event.add_attribute(
-				type = attribute['type']
-				, value = attribute['value']
-				, category = attribute['category']
-				, comment = attribute.get('comment', '')
-				, distribution = self.misp_param['distribution']
-				, Tag = self._create_tags(attribute['tags'])
-			)
+        for attribute in value['attributes']:
+            attribute_tags = []
 
-		event.published = True
+            event.add_attribute(
+                type=attribute['type'], value=attribute['value'], category=attribute['category'], comment=attribute.get('comment', ''), distribution=self.misp_param['distribution'], Tag=self._create_tags(attribute['tags'])
+            )
 
-		if self._update_event(event):
-			self.debug_print('completed')
-			return event
-		else:
-			self.debug_print('add failed')
-			return None
+        event.published = True
 
-	def _get_event(self, id):
+        if self._update_event(event):
+            self.debug_print('completed')
+            return event
+        else:
+            self.debug_print('add failed')
+            return None
 
-		cnt = 0
-		while True:
-			try:
-				if self.misp == None:
-					self._connect()
+    def _get_event(self, id):
 
-				self.debug_print('get event start: {}'.format(id))
-				event=self.misp.get_event(id)
-				if event.get('errors'):
-					raise Exception(str(event['errors']))
+        cnt = 0
+        while True:
+            try:
+                if self.misp == None:
+                    self._connect()
 
-				self.debug_print('get event end: {}'.format(id))
+                self.debug_print('get event start: {}'.format(id))
+                event = self.misp.get_event(id)
+                if event.get('errors'):
+                    raise Exception(str(event['errors']))
 
-				return event
+                self.debug_print('get event end: {}'.format(id))
 
-			except:
-				print(traceback.format_exc())
+                return event
 
-				if cnt < int(self.misp_param.get('max_retry_count', '0')):
-					print('get event retry: {}'.format(cnt))
-					cnt = cnt + 1
-					time.sleep(10)
-				else:
-					return None
+            except:
+                print(traceback.format_exc())
 
-	def _remove_event(self, id):
+                if cnt < int(self.misp_param.get('max_retry_count', '0')):
+                    print('get event retry: {}'.format(cnt))
+                    cnt = cnt + 1
+                    time.sleep(10)
+                else:
+                    return None
 
-		if id:
-			print('delete event: {}'.format(id))
-			cnt = 0
-			while True:
-				try:
-					if self.misp == None:
-						self._connect()
+    def _remove_event(self, id):
 
-					response = self.misp.delete_event(id)
-					if response.get('errors'):
-						raise Exception(str(response['errors']))
+        if id:
+            print('delete event: {}'.format(id))
+            cnt = 0
+            while True:
+                try:
+                    if self.misp == None:
+                        self._connect()
 
-					return True
+                    response = self.misp.delete_event(id)
+                    if response.get('errors'):
+                        raise Exception(str(response['errors']))
 
-				except:
-					print(traceback.format_exc())
+                    return True
 
-					if cnt < int(self.misp_param.get('max_retry_count', '0')):
-						print('remove event retry: {}'.format(cnt))
-						cnt = cnt + 1
-						time.sleep(10)
-					else:
-						return False
+                except:
+                    print(traceback.format_exc())
 
-	def _search_event(self, **cons):
+                    if cnt < int(self.misp_param.get('max_retry_count', '0')):
+                        print('remove event retry: {}'.format(cnt))
+                        cnt = cnt + 1
+                        time.sleep(10)
+                    else:
+                        return False
 
-		cnt = 0
-		while True:
-			try:
-				if self.misp == None:
-					self._connect()
+    def _search_event(self, **cons):
 
-				self.debug_print('search event start')
-				response = self.misp.search_index(**cons)
-				self.debug_print('search event end')
+        cnt = 0
+        while True:
+            try:
+                if self.misp == None:
+                    self._connect()
 
-				results = []
-				for json in response:
+                self.debug_print('search event start')
+                response = self.misp.search_index(**cons)
+                self.debug_print('search event end')
 
-					if json.get('id', ''):
-						results.append(self._get_event(json['id']))
-					else:
-						print('no event ID')
-						print(json)
+                results = []
+                for json in response:
 
-				return results
+                    if json.get('id', ''):
+                        results.append(self._get_event(json['id']))
+                    else:
+                        print('no event ID')
+                        print(json)
 
-			except:
-				print(traceback.format_exc())
+                return results
 
-				if cnt < int(self.misp_param.get('max_retry_count', '0')):
-					print('search event retry: {}'.format(cnt))
-					cnt = cnt + 1
-					time.sleep(10)
-				else:
-					return None
+            except:
+                print(traceback.format_exc())
 
-	def _update_event(self, event):
-		cnt = 0
+                if cnt < int(self.misp_param.get('max_retry_count', '0')):
+                    print('search event retry: {}'.format(cnt))
+                    cnt = cnt + 1
+                    time.sleep(10)
+                else:
+                    return None
 
-		while True:
-			try:
-				if self.misp == None:
-					self._connect()
+    def _update_event(self, event):
+        cnt = 0
 
-				self.debug_print('event update start: {}'.format(event.id))
-				response = self.misp.update_event(event)
-				if response.get('errors'):
-					raise Exception(str(response['errors']))
+        while True:
+            try:
+                if self.misp == None:
+                    self._connect()
 
-				self.debug_print('{} updated'.format(event.id))
-				return True
+                self.debug_print('event update start: {}'.format(event.id))
+                response = self.misp.update_event(event)
+                if response.get('errors'):
+                    raise Exception(str(response['errors']))
 
-			except:
-				print(traceback.format_exc())
+                self.debug_print('{} updated'.format(event.id))
+                return True
 
-				if cnt < int(self.misp_param.get('max_retry_count', '0')):
-					print('retry: {}'.format(cnt))
-					cnt = cnt + 1
-					time.sleep(10)
-				else:
-					print('event update failed: {}'.format(event.info))
-					try:
-						self._remove_event(event.id)
-					except:
-						pass
-					return False
+            except:
+                print(traceback.format_exc())
 
-	def _create_tags(self, values):
-		tags=[]
+                if cnt < int(self.misp_param.get('max_retry_count', '0')):
+                    print('retry: {}'.format(cnt))
+                    cnt = cnt + 1
+                    time.sleep(10)
+                else:
+                    print('event update failed: {}'.format(event.info))
+                    try:
+                        self._remove_event(event.id)
+                    except:
+                        pass
+                    return False
 
-		for value in values:
-			if value:
-				tags.append({'name': value})
+    def _create_tags(self, values):
+        tags = []
 
-		return tags
+        for value in values:
+            if value:
+                tags.append({'name': value})
 
-	def debug_print(self, message):
-		if self.debug == False:
-			return
-#		nowstr = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-		nowstr = datetime.datetime.now().strftime('%H:%M:%S')
+        return tags
 
-		print('{}\t{}'.format(nowstr, message))
+    def debug_print(self, message):
+        if self.debug == False:
+            return
+# nowstr = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        nowstr = datetime.datetime.now().strftime('%H:%M:%S')
+
+        print('{}\t{}'.format(nowstr, message))
