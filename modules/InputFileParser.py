@@ -17,7 +17,7 @@ class InputFileParser(object):
         'date': 0, 'orgg': 1, 'user': 2, 'title': 3, 'tag1': 4, 'tag2': 5, 'tag3': 6, 'tag4': 7, 'value': 8, 'category': 9, 'type': 10, 'attribute_tags': 11, 'comment': 12
     }
 
-    def __init__(self, separator='\t', line_separator='\n', skip_header=False, charset='utf-8', target_row=1):
+    def __init__(self, separator='\t', line_separator='\n', skip_header=False, charset='utf-8-sig', target_row=1):
         self.separator = separator
         self.line_separator = line_separator
         self.skip_header = skip_header
